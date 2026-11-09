@@ -16,7 +16,7 @@ const {
 
 const RULES = {
   'no-assertion': { severity: 'cannot-fail', title: 'Test asserts nothing' },
-  'floating-assertion': { severity: 'cannot-fail', title: 'Assertion is never awaited' },
+  'floating-assertion': { severity: 'weak', title: 'Assertion is never awaited' },
   'swallowed-assertion': { severity: 'cannot-fail', title: 'Assertion failure is swallowed by catch' },
   'tautological-matcher': { severity: 'cannot-fail', title: 'Matcher is true for every value' },
   'guarded-assertion': { severity: 'cannot-fail', title: 'Every assertion sits behind a condition' },
@@ -130,7 +130,7 @@ function detectFloating(sourceFile, statement, test, usesPlaywright) {
   const isPoll = chain.head.includes('poll');
   if (!isAsyncMatcher && !isPromiseChain && !isPoll) return null;
   return finding('floating-assertion', sourceFile, expr, test,
-    'This assertion returns a promise that is never awaited, so a failure is raised after the test has already passed.');
+    'Nothing awaits this assertion. The runner still reports a failure, but out of band — attributed to the wrong place and raised after the state being checked has moved on.');
 }
 
 function detectSilentFallback(sourceFile, node, test) {

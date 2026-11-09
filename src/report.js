@@ -16,7 +16,7 @@ const ORDER = [
 
 const EXPLANATION = {
   'no-assertion': 'Nothing is checked. The test turns red only if the code under it throws.',
-  'floating-assertion': 'Playwright assertions return promises. Without await the result lands after the test has finished, so the test is already green.',
+  'floating-assertion': 'The assertion returns a promise nobody waits for. Current Playwright and Jest still surface the failure, but detached from the line that caused it and after the state it was checking has moved on — so the report points somewhere unhelpful.',
   'swallowed-assertion': 'A catch block absorbs the assertion error. The test cannot report the failure it just found.',
   'guarded-assertion': 'All checks hide behind an if or a loop. Whenever the condition is false, the test passes having verified nothing.',
   'silent-early-return': 'The test leaves before asserting. A missing precondition reads as success rather than as a problem.',

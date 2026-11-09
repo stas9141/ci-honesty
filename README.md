@@ -49,7 +49,7 @@ Output looks like this:
 | Rule | Severity | What it means |
 |---|---|---|
 | `no-assertion` | cannot-fail | No assertion, directly or through a helper that asserts |
-| `floating-assertion` | cannot-fail | A Playwright assertion that is never awaited |
+| `floating-assertion` | weak | An assertion nobody awaits — still reported, but attributed to the wrong place |
 | `swallowed-assertion` | cannot-fail | A catch block absorbs the assertion error |
 | `guarded-assertion` | cannot-fail | Every assertion sits behind a condition |
 | `silent-early-return` | cannot-fail | The test returns before asserting and still passes |
@@ -84,6 +84,17 @@ the tool had misjudged and seeing what it had missed:
 7. **Type-level tests.** `*.test-d.ts` is the compiler's job, not the test runner's.
 
 That last one alone took one repository from 260 flagged tests down to 6.
+
+## One claim this tool used to get wrong
+
+`floating-assertion` was reported as "cannot fail" until it was checked properly. It is not.
+An unawaited assertion written to fail was run against Playwright 1.56 and Jest 29, and both
+reported it: Playwright failed the test and pointed at the line, Jest raised an unhandled
+rejection that took the worker down with it. The failure is attributed badly and arrives after
+the state has moved on, which is worth fixing — but the test does not pass.
+
+Severity is now `weak`. The lesson generalises: a rule is a claim about a runner's behaviour,
+and the only way to know is to write a check that must fail and watch what the runner does.
 
 ## Where a human is still needed
 
