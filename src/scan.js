@@ -8,6 +8,9 @@ const SKIP_DIRS = new Set([
   'node_modules', '.git', 'dist', 'build', 'out', 'coverage', '.next', '.nuxt',
   'vendor', 'target', '.venv', 'venv', '__pycache__', 'playwright-report',
   'test-results', 'allure-results', 'allure-report', '.cache', '.turbo',
+  // Deliberately broken samples and vendored third-party projects. Judging someone else's
+  // code and reporting it as theirs is worse than missing a finding.
+  'fixtures', '__fixtures__', 'testdata', 'test-data', '__mocks__', '__snapshots__',
 ]);
 
 const SOURCE_EXT = /\.(ts|tsx|js|jsx|mts|cts|mjs|cjs)$/;

@@ -175,6 +175,10 @@ function analyzeTestBody(sourceFile, test, ctx) {
   if (!body) return findings;
 
   const usesPlaywright = ctx.usesPlaywright;
+  // `it('...', function (done) {...})` — the runner waits for done(), so a callback that
+  // never fires times the test out rather than passing it.
+  const firstParam = test.fn.parameters && test.fn.parameters[0];
+  const usesDoneCallback = !!firstParam && ts.isIdentifier(firstParam.name);
   let totalAssertions = 0;
   let unguardedAssertions = 0;
   let assertionsInLoops = 0;
@@ -198,8 +202,10 @@ function analyzeTestBody(sourceFile, test, ctx) {
         nextDepth.loop = depth.loop + 1;
         nextDepth.guard = depth.guard + 1;
       } else {
-        const deferred = owner ? !(isAwaited(owner) || isStepLikeCall(owner)) : true;
-        const listener = owner ? isListenerCall(owner) : false;
+        const deferred =
+          !usesDoneCallback && (owner ? !(isAwaited(owner) || isStepLikeCall(owner)) : true);
+        // A `.then()` the test returns or awaits is not a callback that may never run.
+        const listener = deferred && owner ? isListenerCall(owner) : false;
         if (deferred) nextDepth.callback = depth.callback + 1;
         if (listener) nextDepth.listener = depth.listener + 1;
       }
