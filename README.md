@@ -1,14 +1,50 @@
 # ci-honesty
 
-Finds tests that cannot fail — the ones that report green whatever the product does.
+Finds tests that cannot fail.
+
+Such a test still runs, still costs time in CI, and still goes green while the product is
+broken. This tool reads your test sources and tells you which ones they are.
+
+## Install
 
 ```bash
-node bin/ci-honesty.js <path-to-repo> --md report.md --json findings.json
+git clone https://github.com/stas9141/ci-honesty.git
+cd ci-honesty
+npm install
 ```
 
-Static analysis only. Nothing is executed, nothing leaves the machine.
+Node 18 or newer. The only dependency is the TypeScript compiler, used as a parser.
 
-## What it looks for
+## Use
+
+```bash
+node bin/ci-honesty.js <path-to-repo>
+```
+
+Add `--md report.md` for a written report with file, line and snippet for every finding,
+or `--json findings.json` if you want to feed it to something else.
+
+No test is ever executed — the tool parses source files and nothing more, so running it
+against a repository you don't own is harmless.
+
+Output looks like this:
+
+```
+  Scanned 1535 source files, 148 test files, 1996 tests.
+
+  Cannot fail : 67 tests (81 findings)
+  Weakened    : 60 findings
+  Disabled    : 88 findings
+
+    19  floating-assertion  —  Assertion is never awaited
+    40  guarded-assertion  —  Every assertion sits behind a condition
+    19  silent-early-return  —  Test returns early and passes
+    17  loop-only-assertion  —  Assertions run only inside a loop that may be empty
+    40  silent-fallback  —  Asserted value has a literal fallback
+     2  swallowed-assertion  —  Assertion failure is swallowed by catch
+```
+
+## Rules
 
 | Rule | Severity | What it means |
 |---|---|---|
@@ -24,27 +60,33 @@ Static analysis only. Nothing is executed, nothing leaves the machine.
 | `conditional-skip` | debt | The test opts out at runtime |
 | `disabled-test` | debt | Turned off |
 
-## Precision
+Works on Playwright, Jest, Vitest and Mocha suites in JavaScript or TypeScript.
 
-False positives are the whole game. A report that over-claims is worth nothing, so every
-rule below was written only after reading the code it had been wrong about. Seven classes
-of false positive were found and fixed:
+## False positives
 
-1. **Framework hooks counted as tests.** `test.beforeEach` / `afterAll` are not tests.
-2. **Assertion style assumed to be `expect`.** Real suites assert with `throw new Error(...)`
-   or a custom comparator. `isFailureSignal` covers those too.
-3. **Wrappers named like matchers.** A project-local `toEqual()` or `toBeTruthy()` is an
-   assertion even though it is not `expect`.
-4. **Helpers in external packages.** When a test delegates to something imported from a
-   package the scan cannot read, the result is unknown, not "asserts nothing".
-5. **Exhaustive `if/else`.** When both branches assert, the assertion always runs.
-6. **`.forEach()` treated as a listener.** It is a loop, so its assertions are skipped only
-   when the collection is empty.
-7. **Type-level tests.** `*.test-d.ts` files are checked by the compiler, not the runner.
+This is the part that decides whether the tool is worth running. A list full of wrong
+answers is worse than no list, because somebody has to read all of it before finding
+that out.
 
-Rule 7 alone took one repository from 260 flagged tests to 6.
+Seven kinds of wrong answer have turned up so far. Each was fixed by opening the code
+the tool had misjudged and seeing what it had missed:
 
-## Judgement still required
+1. **Framework hooks counted as tests.** `test.beforeEach` and `afterAll` are not tests.
+2. **Assuming everyone asserts with `expect`.** Plenty of suites raise `throw new Error(...)`
+   or call a project comparator instead.
+3. **Wrappers named like matchers.** A local `toEqual()` or `toBeTruthy()` asserts just
+   fine without being `expect`.
+4. **Helpers living in external packages.** If the scan can't read the package, the honest
+   answer is "unknown", not "asserts nothing".
+5. **Exhaustive `if/else`.** Both branches assert, so the assertion always runs.
+6. **`.forEach()` mistaken for an event listener.** It's a loop. Its assertions are skipped
+   only when the collection is empty.
+7. **Type-level tests.** `*.test-d.ts` is the compiler's job, not the test runner's.
 
-`conditional-skip` is reported as debt, not as a false green, because whether a skip helper
-marks the run as skipped or lets it pass depends on the helper. Read it before claiming it.
+That last one alone took one repository from 260 flagged tests down to 6.
+
+## Where a human is still needed
+
+`conditional-skip` is reported as debt rather than as a false green, because the tool
+genuinely can't tell the difference. Whether a skip helper marks the run as skipped or
+quietly lets it pass depends on what the helper does. Open the file and look.
