@@ -1,0 +1,8 @@
+node_modules/
+
+# Scan output — may contain source snippets from whatever repo was scanned
+*.report.md
+*.findings.json
+report.md
+findings.json
+out/

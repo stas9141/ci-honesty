@@ -1,0 +1,27 @@
+{
+  "name": "ci-honesty",
+  "version": "0.1.0",
+  "description": "Finds tests that cannot fail.",
+  "license": "MIT",
+  "author": "Stas Dobromilskyi",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stas9141/ci-honesty.git"
+  },
+  "keywords": [
+    "testing",
+    "playwright",
+    "static-analysis",
+    "test-quality",
+    "flaky-tests"
+  ],
+  "bin": {
+    "ci-honesty": "bin/ci-honesty.js"
+  },
+  "scripts": {
+    "selftest": "node bin/ci-honesty.js fixtures"
+  },
+  "dependencies": {
+    "typescript": "^5.6.0"
+  }
+}
