@@ -26,3 +26,18 @@ jobs:
       - run: npm test
       # A directory with no tests in it must come back empty, not crash.
       - run: node bin/ci-honesty.js src
+
+  # Each rule claims a runner lets a certain kind of wrongness through. These suites are
+  # written to be wrong on purpose and are supposed to pass. A failure here means a runner
+  # changed its behaviour and a rule now overstates its case — see verification/README.md.
+  verify-the-claims:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install chromium --with-deps
+      - run: npm run verify

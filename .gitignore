@@ -6,3 +6,7 @@ node_modules/
 report.md
 findings.json
 out/
+
+# Playwright artefacts from the verification run
+test-results/
+playwright-report/
